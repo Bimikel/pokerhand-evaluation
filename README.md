@@ -127,6 +127,27 @@ Endpoints:
 - `POST /decision` - Get a decision recommendation
 - `GET /health` - Health check
 
+## Performance
+
+`/evaluate` runs 10,000 Monte Carlo samples per request (standard error at
+most 0.5/sqrt(n), about +/-0.5% equity). Run `python scripts/benchmark.py`
+to measure; on a typical cloud VM, median latency is roughly 50ms (river)
+to 140ms (preflop).
+
+What made it fast (it was about 8.8s per request before):
+
+- The opponent range is expanded into card combos once per request instead
+  of once per sample.
+- Hands are scored by a single-pass integer evaluator
+  (`poker_ai/game/fast_eval.py`) instead of checking all 21 five-card
+  subsets with `Card` objects (about 30x faster per hand).
+- Opponent hands are drawn in one weighted sampling call, and no `Deck`
+  object is built per sample.
+
+Correctness is checked in `tests/test_fast_eval.py` (fast evaluator agrees
+with the reference evaluator) and `tests/test_equity_accuracy.py` (known
+matchups such as AA vs KK, and exact river enumeration).
+
 ## Development
 
 ```bash
