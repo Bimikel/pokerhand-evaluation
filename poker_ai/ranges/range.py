@@ -53,32 +53,33 @@ class HandRange:
         if len(hand_str) == 2:  # Pocket pair like 'AA'
             rank = self._char_to_rank(hand_str[0])
             combos = []
+            # suit1 < suit2 so each of the 6 combos appears once. Using
+            # suit1 != suit2 listed every combo twice (AsAh and AhAs), which
+            # made pairs twice as likely to be sampled as they should be.
             for suit1 in Suit:
                 for suit2 in Suit:
-                    if suit1 != suit2:
+                    if suit1 < suit2:
                         combos.append((Card(rank, suit1), Card(rank, suit2)))
             return combos
         
-        elif len(hand_str) == 3:  # Offsuit like 'AKo'
+        # Suited ('AKs', stored upper-cased as 'AKS', or 'AKsu') and
+        # offsuit ('AKo'). Previously 3-character suited keys fell through
+        # to the offsuit branch and returned no combos, so every suited hand
+        # in a range was silently ignored.
+        if len(hand_str) in (3, 4):
             rank1 = self._char_to_rank(hand_str[0])
             rank2 = self._char_to_rank(hand_str[1])
-            if hand_str[2] == 'O':
-                combos = []
-                for suit1 in Suit:
-                    for suit2 in Suit:
-                        if suit1 != suit2:
-                            combos.append((Card(rank1, suit1), Card(rank2, suit2)))
-                return combos
-        
-        elif len(hand_str) == 4:  # Suited like 'AKs'
-            rank1 = self._char_to_rank(hand_str[0])
-            rank2 = self._char_to_rank(hand_str[1])
-            if hand_str[2:4] == 'SU' or hand_str[2] == 'S':
-                combos = []
-                for suit in Suit:
-                    combos.append((Card(rank1, suit), Card(rank2, suit)))
-                return combos
-        
+            suffix = hand_str[2:]
+            if suffix in ('S', 'SU'):
+                return [(Card(rank1, suit), Card(rank2, suit)) for suit in Suit]
+            if suffix == 'O':
+                return [
+                    (Card(rank1, suit1), Card(rank2, suit2))
+                    for suit1 in Suit
+                    for suit2 in Suit
+                    if suit1 != suit2
+                ]
+
         return []
     
     def _char_to_rank(self, char: str) -> Rank:

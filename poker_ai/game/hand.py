@@ -76,7 +76,10 @@ class HandEvaluator:
         counts = sorted(rank_counts.values(), reverse=True)
         is_flush = len(set(suits)) == 1
         is_straight = HandEvaluator._is_straight(ranks)
-        
+        # In the wheel (A-2-3-4-5) the ace plays low, so the straight is
+        # five-high. Without this, the wheel would outrank a six-high straight.
+        straight_high = 5 if ranks == [14, 5, 4, 3, 2] else ranks[0]
+
         # Royal flush
         if is_flush and is_straight and ranks[0] == Rank.ACE.value and ranks[1] == Rank.KING.value:
             return HandEvaluation(
@@ -90,7 +93,7 @@ class HandEvaluator:
             return HandEvaluation(
                 rank=HandRank.STRAIGHT_FLUSH,
                 cards=cards,
-                kickers=[ranks[0]]
+                kickers=[straight_high]
             )
         
         # Four of a kind
@@ -126,7 +129,7 @@ class HandEvaluator:
             return HandEvaluation(
                 rank=HandRank.STRAIGHT,
                 cards=cards,
-                kickers=[ranks[0]]
+                kickers=[straight_high]
             )
         
         # Three of a kind

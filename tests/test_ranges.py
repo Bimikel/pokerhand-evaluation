@@ -28,3 +28,20 @@ def test_range_operations():
     intersection = range1.intersect(range2)
     assert intersection.size() <= range1.size()
 
+
+def test_combo_counts():
+    """Each hand class has the right number of distinct card combos."""
+    r = HandRange()
+    assert len(r._hand_to_combos("AA")) == 6
+    assert len(r._hand_to_combos("AKs")) == 4
+    assert len(r._hand_to_combos("AKo")) == 12
+    # No combo should appear twice.
+    combos = r._hand_to_combos("AA")
+    assert len({frozenset(c) for c in combos}) == 6
+
+
+def test_all_pairs_is_78_combos():
+    """13 pairs x 6 combos = 78 of the 1326 starting hands."""
+    r = RangeParser().parse("22+")
+    assert abs(r.size() - 78 / 1326) < 1e-9
+
